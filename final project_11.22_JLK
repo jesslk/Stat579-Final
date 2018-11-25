@@ -1,0 +1,171 @@
+---
+title: "Final Project, STAT 579"
+author: "TEAM 5: Amin Shirazi, Hana Lee, Jessica Kueon, Sungchan Park"
+date: "November 22, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+d <- read.csv("SpeedDating.csv")
+
+d <- d %>% filter(wave %in% c(1:5, 7:11, 13:15, 17)) #Remove some waves as in the paper
+
+d <- d %>% mutate(new.wave = if_else(wave %in% 7:11, wave - 1,
+                                if_else(wave %in% 13:15, wave -2,
+                                        if_else(wave == 17, wave -3, as.double(wave)))))
+
+d %>%  select(wave, new.wave) %>% table()
+
+d <- d %>% mutate(wave = new.wave) %>%
+  select(-new.wave)
+
+#################d is the final data currently###############################
+
+length(unique(d$iid))
+
+temp <- d %>% group_by(wave, gender, id) %>%
+  summarise(n = n())
+
+View(temp%>% filter(wave == 14))
+
+temp1 <- d %>% group_by(wave, id, gender) %>% 
+  summarise(n = n())
+
+View(temp1 %>% filter(wave == 2))
+
+
+(summary <- d %>% group_by(wave, id, gender, idg) %>%
+  summarise(n = n()) %>%
+  ungroup(wave, id, gender, idg) %>%
+  select(wave, gender, n) %>%
+  group_by(wave, gender) %>%
+  count() %>%
+  spread(gender, nn))
+
+sum(summary$`0`, summary$`1`)
+
+
+t1 <- d %>% group_by(wave, gender, iid) %>%
+  summarise(`percentage of yes` = 100 * mean(dec_o),
+            `percentage of match` = 100 * mean(match),
+            `# of meeting` = n()) #Individual level
+View(t1)
+
+t1 %>% ggplot(aes(x = wave, fill = factor(gender))) + geom_bar() #Distribution of gender by wave
+t1 %>% ggplot(aes(x = wave, fill = factor(gender))) + geom_bar(position = "fill") #Distribution of gender by wave
+d %>% group_by(gender, iid) %>%
+  count() %>%
+  ggplot(aes(x = factor(gender))) + geom_bar()
+
+t1 %>% ggplot(aes(x = factor(wave), y = `percentage of yes`)) + geom_boxplot() + facet_grid(factor(gender)~.) 
+
+t1 %>% ggplot(aes(x = factor(gender), y = `percentage of yes`)) + geom_boxplot() + facet_grid(.~factor(wave)) 
+
+t2 <- d %>% group_by(wave, gender) %>%
+  summarise(`percentage of yes` = 100 * mean(dec_o),
+            `percentage of match` = 100 * mean(match),
+            `# of meeting` = n()) #Wave level
+t2 %>% ggplot(aes(x = factor(wave), y = `percentage of yes`, 
+                  group = factor(gender), shape = factor(gender), color = factor(gender))) +
+  geom_point() + geom_line() + ylim(c(0, 70))
+
+d %>% filter(dec_o == 1) %>%
+  group_by(wave) %>%
+  ggplot(aes(x = factor(dec_o), fill = factor(gender))) + geom_bar(position = "fill") + facet_grid(.~ wave)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+maps::map("world", fill=TRUE, col="white", bg="lightblue", ylim=c(-60, 90), mar=c(0,0,0,0))
+
+map.world <- map_data("world")
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+##JESS
+
+
+Female=0
+Male=1
+
+
+```{r}
+head(d)
+
+## Wave 8 Analysis
+
+##mean age for everyone
+d %>% filter(wave == 8) %>% group_by(gender) %>% summarise(mean_age_by_gender = mean(age))
+
+##mean age for matched couples
+
+d %>% filter(wave == 8 & match == 1) %>% group_by(gender) %>% summarise(mean_age_by_gender = mean(age))
+
+
+
+### Proportion of same race;
+d %>% filter(wave == 8) %>% group_by(gender) %>% summarise(race = sum(samerace)/length(gender))
+
+d %>% filter(wave == 8 & match == 1) %>% group_by(gender) %>% summarise(race = sum(samerace)/length(gender))
+
+
+### For every wave
+d %>% filter(match == 1) %>% group_by(gender, wave) %>% summarise(mean_age_by_gender = mean(age))
+
+d %>% group_by(gender, wave) %>% summarise(mean_age_by_gender = mean(age))
+
+d %>% filter(match == 1) %>% group_by(wave) %>% summarise(race = sum(samerace)/length(gender))
+
+
+d %>% group_by(gender, wave) %>% summarise(mean_age_by_gender = mean(age))
+
+d %>% filter(match == 1) %>% group_by(wave) %>% summarise(mean_corr = mean(int_corr))
+
+```
+
+
+Age difference
+
+```{r}
+## Age diff
+
+d <-d %>% mutate(age_diff = abs(age_o-age))
+
+d %>% group_by(age_diff) %>% summarise(des2 = sum(dec_o)/n()) %>% ggplot(aes(x = factor(age_diff), y = des2)) + geom_point() + ylim(0, 1)
+
+## For age diff more than 15, not many obs
+d %>% group_by(age_diff) %>% summarise(mat2 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff), y = mat2)) + geom_point() + ylim(0, 0.5)
+
+d %>% group_by(age_diff) %>% summarise(mat2 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff), y = mat2)) + geom_point() + ylim(0,0.5)
+
+
+d %>% group_by(age_diff) %>% summarise(mat2 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff), y = as.numeric(mat2))) + geom_bar(stat="identity", fill="steelblue") + theme_minimal() 
+
+
+```
+
+
+
+distribution of demographics
+
+```{r}
+ggplot() + 
+  geom_bar(data = d,
+           aes(x = factor(match),fill = factor(samerace)),
+           position = "fill")
+
+```
+
