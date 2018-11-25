@@ -169,3 +169,57 @@ ggplot() +
 
 ```
 
+## Clean dataset part 2
+
+# maps::map("world", fill=TRUE, col="white", bg="lightblue", ylim=c(-60, 90), mar=c(0,0,0,0))
+
+ABB <- read.csv("ABB.csv")
+map.world <- map_data("world")
+
+map.region.tmp <- map.world %>% 
+  select(region) %>%
+  mutate(region = as.character(region)) %>%
+  unique()
+
+ABB.region.tmp <- ABB %>% 
+  mutate(region = as.character(ABB)) %>%
+  select(region) %>% 
+  unique()
+
+R.ABB <- as.data.frame(state.abb) %>%
+  mutate(region = as.character(state.abb)) %>%
+  select(region)
+
+## 1. To check if there is non-matching STATE names in ABB and state.abb (in datasets)
+
+ABB.region.tmp %>% anti_join(R.ABB, by = "region")
+
+R.ABB[51:52,] <- c("DC", "PR") #Add DC and PR to the list of 50 states in USA
+
+
+## 2. To create `USA/International` variable in the dataset d
+fun.ABB <- function(d1){
+ifelse(d1 %in% c("NA"), "NA",
+         ifelse(d1 %in% R.ABB[,1], "USA", "International"))
+}
+
+d <- d %>% left_join(ABB %>% select(-No) %>% unique(), by = "from") %>% 
+  mutate(`USA/International` = if_else(is.na(ABB) == FALSE, fun.ABB(as.character(ABB)), as.character(NA)),
+         ABB = if_else(is.na(ABB) == FALSE, as.character(ABB), as.character(NA)),
+         Country = if_else(`USA/International` == "USA", "USA", ABB))
+
+## 3. To check if there is non-matching COUNTRY names in ABB and map_data (in ggplot2)
+
+d %>% filter(Country != "USA") %>%
+  mutate(region = ABB) %>%
+  select(region) %>% 
+  unique() %>% 
+  anti_join(map.region.tmp, by = "region")
+
+# Adjust two country names
+d <- d %>% mutate(ABB = if_else(ABB == "Yugoslavia", "Montenegro", ABB),
+                  ABB = if_else(ABB == "Hong Kong", "China", ABB),
+                  region = Country) 
+
+# To match country names in map_data, and our file
+
