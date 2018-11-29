@@ -223,3 +223,27 @@ d <- d %>% mutate(ABB = if_else(ABB == "Yugoslavia", "Montenegro", ABB),
 
 # To match country names in map_data, and our file
 
+
+
+
+## AGE AMIN USE THIS!!
+
+d <-d %>% mutate(age_diff = abs(age_o-age))
+
+d %>% group_by(age_diff) %>% summarise(des2 = sum(dec_o)/n()) %>% ggplot(aes(x = factor(age_diff), y = des2)) + geom_point() + ylim(0, 1)
+
+## For age diff more than 15, not many obs
+d %>% group_by(age_diff) %>% summarise(mat2 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff), y = mat2)) + geom_point() + ylim(0, 0.5)
+
+d %>% group_by(age_diff) %>% summarise(mat2 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff), y = mat2)) + geom_point() + ylim(0,0.5)
+
+
+d %>% group_by(age_diff) %>% summarise(mat2 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff), y = as.numeric(mat2))) + geom_bar(stat="identity", fill="steelblue") + theme_minimal() 
+
+
+d %>% mutate(age_diff2 = age_o-age) %>%  group_by(gender, age_diff2) %>% summarise(mat3 = sum(match)/n()) %>% ggplot(aes(x = factor(age_diff2), y = as.numeric(mat3))) + geom_bar(stat="identity") + facet_grid(gender~.)
+
+
+
+d %>% mutate(age_diff2 = age_o-age) %>%  group_by(gender, age_diff2) %>% summarise(dec3 = sum(dec_o)/n()) %>% ggplot(aes(x = factor(age_diff2), y = as.numeric(dec3))) + geom_bar(stat="identity") + facet_grid(gender~.)
+
